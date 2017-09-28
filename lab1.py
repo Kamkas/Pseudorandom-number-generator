@@ -26,30 +26,26 @@ class Generator:
         try:
             print("Starting python builtin pseudo-generator...")
             random.seed(self.seed, version=2)
-            arr = list()
             for index in range(bytes_number):
-                arr.append(random.randint(0, 1))
                 self.progress_bar(index, bytes_number)
+                yield str(random.randint(0, 1))
             print("Done!")
-            return arr
         except KeyboardInterrupt:
             print("\nCanceled by user.")
-            return list()
+            raise StopIteration
 
     def numpy_builtin_rand(self, bytes_number):
         try:
             print("Starting NumPy builtin pseudo-generator...")
             r = rnd.RandomState()
             r.seed(self.seed)
-            arr = list()
             for index in range(bytes_number):
-                arr.append(r.choice((0, 1)))
                 self.progress_bar(index, bytes_number)
+                yield str(r.choice((0, 1)))
             print("\nDone!")
-            return arr
         except KeyboardInterrupt:
             print("\nCanceled by user.")
-            return list()
+            raise StopIteration
 
     def fibo_lagged_rand(self, bytes_number):
         try:
@@ -65,7 +61,7 @@ class Generator:
                 (lag_a, lag_b) = (97, 33)
             else:
                 print("Wrong choice")
-                return list()
+                raise StopIteration
             print("\nStarting python builtin pseudo-generator for initial sequence...")
             arr = [r.uniform(0, 1) for i in range(lag_a + 1)]
             print("\nDone!\nStarting fibo pseudo-generator...")
@@ -73,20 +69,11 @@ class Generator:
                 x_k = arr[index - lag_a] - arr[index - lag_b]
                 if x_k < 0:
                     x_k += 1
-                arr.append(x_k)
                 self.progress_bar(index - lag_a, bytes_number - lag_a)
-            print("\nDone!\nChanging values from float to binary...")
-            for index, x in enumerate(arr):
-                self.progress_bar(index, bytes_number)
-                if x < 0.5:
-                    arr[index] = 0
-                else:
-                    arr[index] = 1
-            print("\nDone!")
-            return arr
+                yield lambda x: '0' if x_k < 0.5 else '1'
         except KeyboardInterrupt:
             print("\nCanceled by user.")
-            return list()
+            raise StopIteration
 
     def pm_rand_round(self, last_value):
         IA = 16807
@@ -104,28 +91,24 @@ class Generator:
     def pm_rand(self, bytes_number):
         try:
             arr = list()
-            print("\nStarting parka-miller's pseudo-generator...")
-            for index in range(bytes_number):
-                if index is 0:
-                    arr.append(self.pm_rand_round(self.seed))
+            arr[0] = self.pm_rand_round(self.seed)
+            print("\nStarting park-miller's pseudo-generator...")
+            for index in range(1, bytes_number):
                 arr.append(self.pm_rand_round(arr[index - 1]))
                 self.progress_bar(index, bytes_number)
             print("\nDone!\nStarting convert values from integer to binary...")
-            bin_arr = list()
             a = (2 ** 31 - 1) // 2
             for index, el in enumerate(arr):
-                if el < a + 1:
-                    bin_arr.append(0)
-                elif el >= a:
-                    bin_arr.append(1)
-            return bin_arr
+                self.progress_bar(index, len(arr))
+                yield lambda x: '0' if el < a + 1 else '1'
         except KeyboardInterrupt:
             print("\nCanceled by user.")
-            return list()
+            raise StopIteration
 
-    def write_to_file(self, arr):
+    def write_iter_to_file(self, iterator):
         print("Writing to file \"%s\"" % self.output_filename)
         with open(self.output_filename, 'w+') as f:
-            f.write(''.join([str(x) for x in arr]))
+            for el in iterator:
+                f.write(el)
             f.close()
         print("Done!")
