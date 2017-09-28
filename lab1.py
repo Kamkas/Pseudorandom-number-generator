@@ -65,42 +65,39 @@ class Generator:
             print("\nStarting python builtin pseudo-generator for initial sequence...")
             arr = [r.uniform(0, 1) for i in range(lag_a + 1)]
             print("\nDone!\nStarting fibo pseudo-generator...")
-            for index in range(lag_a + 2, bytes_number + 1):
-                x_k = arr[index - lag_a] - arr[index - lag_b]
+            for index in range(0, bytes_number):
+                x_k = arr[len(arr) - lag_a] - arr[len(arr) - lag_b]
                 if x_k < 0:
                     x_k += 1
-                self.progress_bar(index - lag_a, bytes_number - lag_a)
-                yield lambda x: '0' if x_k < 0.5 else '1'
+                arr.append(x_k)
+                last_value = arr.pop(0)
+                self.progress_bar(index, bytes_number)
+                if last_value < 0.5:
+                    yield '0'
+                else:
+                    yield '1'
+            print("Done!")
         except KeyboardInterrupt:
             print("\nCanceled by user.")
             raise StopIteration
 
-    def pm_rand_round(self, last_value):
-        IA = 16807
-        IM = 2147483647
-
-        next_value = 0
-
-        if last_value is not None or last_value is not 0:
-            next_value = IA * last_value % IM
-        else:
-            raise ValueError("Value should be >= 1")
-
-        return next_value
-
     def pm_rand(self, bytes_number):
         try:
-            arr = list()
-            arr[0] = self.pm_rand_round(self.seed)
             print("\nStarting park-miller's pseudo-generator...")
-            for index in range(1, bytes_number):
-                arr.append(self.pm_rand_round(arr[index - 1]))
-                self.progress_bar(index, bytes_number)
-            print("\nDone!\nStarting convert values from integer to binary...")
+            IA = 16807
+            IM = 2147483647
             a = (2 ** 31 - 1) // 2
-            for index, el in enumerate(arr):
-                self.progress_bar(index, len(arr))
-                yield lambda x: '0' if el < a + 1 else '1'
+            prev_value = IA * self.seed % IM
+            next_value = 0
+            for index in range(1, bytes_number + 1):
+                next_value = IA * prev_value % IM
+                prev_value = next_value
+                self.progress_bar(index, bytes_number + 1)
+                if next_value < a + 1:
+                    yield '0'
+                else:
+                    yield '1'
+            print("Done!")
         except KeyboardInterrupt:
             print("\nCanceled by user.")
             raise StopIteration
@@ -112,3 +109,15 @@ class Generator:
                 f.write(el)
             f.close()
         print("Done!")
+
+if __name__ == '__main__':
+    bytes_number = 10**8
+    g = Generator(123456789, None)
+    g.output_filename = "py_builtin_random.out"
+    g.write_iter_to_file(g.python_builtin_rand(bytes_number))
+    g.output_filename = "numpy_rand.out"
+    g.write_iter_to_file(g.numpy_builtin_rand(bytes_number))
+    g.output_filename = "fibo_lagged_rand.out"
+    g.write_iter_to_file(g.fibo_lagged_rand(bytes_number))
+    g.output_filename = "pm_rand.out"
+    g.write_iter_to_file(g.pm_rand(bytes_number))
