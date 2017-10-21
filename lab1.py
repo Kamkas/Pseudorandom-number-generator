@@ -51,7 +51,8 @@ class Generator:
         try:
             r = random.Random()
             r.seed(self.seed)
-            print("Please enter lags (a,b) what to use:\n [1]: (17,5)\n [2]: (55,24)\n [3]: (97,33)\n")
+            print("Fibonacci lagged pseudo random generator.\n \
+                Please enter lags (a,b) what to use:\n [1]: (17,5)\n [2]: (55,24)\n [3]: (97,33)\n")
             choice = input("Choice: ")
             if choice is "1":
                 (lag_a, lag_b) = (17, 5)
@@ -111,13 +112,37 @@ class Generator:
         print("Done!")
 
 if __name__ == '__main__':
-    bytes_number = 10**8
-    g = Generator(123456789, None)
-    g.output_filename = "py_builtin_random.out"
-    g.write_iter_to_file(g.python_builtin_rand(bytes_number))
-    g.output_filename = "numpy_rand.out"
-    g.write_iter_to_file(g.numpy_builtin_rand(bytes_number))
-    g.output_filename = "fibo_lagged_rand.out"
-    g.write_iter_to_file(g.fibo_lagged_rand(bytes_number))
-    g.output_filename = "pm_rand.out"
-    g.write_iter_to_file(g.pm_rand(bytes_number))
+    print("Utility for pseudo random generation of N number of ascii \'0\' and \'1\'.\nIf you want to quit utility, press \"Ctrl+C\"\n")
+    while True:
+        try:
+            print(
+                """
+                Choose mode that would generate pseudo random sequence:\n
+                1. Python builtin random generator\n
+                2. NumPy builtin random generator\n
+                3. Fibonacci lagged random generator\n
+                4. Park-Miller random generator\n
+                """
+            )
+            mode = int(input("Enter mode[1..4]: "))
+            seed_number = int(input("Enter seed: "))
+            bytes_number = int(input("Enter number of random sequence: "))
+            filename = input("Enter file name, which random sequence should be written in \
+                (file should be nearby in folder or it would be created): ")
+            g = Generator(seed_number, filename)
+            if mode is 1:
+                g.write_iter_to_file(g.python_builtin_rand(bytes_number))
+            elif mode is 2:
+                g.write_iter_to_file(g.numpy_builtin_rand(bytes_number))
+            elif mode is 3:
+                g.write_iter_to_file(g.fibo_lagged_rand(bytes_number))
+            elif mode is 4:
+                g.write_iter_to_file(g.pm_rand(bytes_number))
+            else:
+                print("\nWrong mode! Try again!\n")
+                continue
+        except KeyboardInterrupt:
+            print("\nQuit utility.Bye!\n")
+            break
+        except ValueError as e:
+            print("\nError occured! {0}\n".format(e.args))
